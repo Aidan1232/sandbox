@@ -33,7 +33,7 @@ scene.add(sun);
 let timeOfDay = 0; // 0 = midnight, 12 = noon, 24 = midnight
 
 // Camera position
-camera.position.set(0, 10, 20);
+camera.position.set(0, 50, 20);
 camera.lookAt(0, 0, 0);
 
 // Controls: WASD + pointer lock mouse look
@@ -188,8 +188,8 @@ instructions.addEventListener("click", () => {
         // Shuffle the list (Fisher–Yates)
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+              const j = Math.floor(Math.random() * (i + 1));
+              [array[i], array[j]] = [array[j], array[i]];
             }
             return array;
         }
