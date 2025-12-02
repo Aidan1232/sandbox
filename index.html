@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Sandbox Prototype</title>
+        <link rel="icon" type="image/png" href="icon/favicon.ico">
+        <link rel="stylesheet" href="styles/style.css">
+    </head>
+    <body>
+        <div id="instructions">
+            Click to lock mouse
+        </div>
+        <div id="crosshair"></div>
+        <div id="inventory">
+            <!-- slots will be filled dynamically -->
+        </div>
+        <div id="inventoryPanel" style="display:none;">
+            <!-- grid of slots -->
+        </div>
+        <div id="hud">
+            <div id="fps">FPS: 0</div>
+            <br>
+            <div id="position">X: 0 Y: 0 Z: 0</div>
+            <br>
+            <div id="memory">Memory: 0 MB</div>
+        </div>
+        <div id="settings">
+            <h3>Settings</h3>
+            <!-- Radius slider -->
+            <label for="radius">Render Distance:</label>
+            <br>
+            <input type="range" id="radius" min="1" max="10" value="4">
+            <span id="radiusValue">4</span>
+            <p style="font-size: 15px;">ANY HIGHER THAN 6 RENDER DISTANCE MAY CAUSE PERFORMANCE ISSUES</p>
+            <br><br>
+
+            <!-- Music Volume slider -->
+            <label for="volume">Music Volume:</label>
+            <br>
+            <input type="range" id="volume" min="0" max="1" step="0.01" value="0.2">
+            <span id="volumeValue">0.2</span>
+            <br><br>
+
+            <!-- SFX Volume slider -->
+            <label for="sfxVolume">SFX Volume:</label>
+            <br>
+            <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="1.0">
+            <span id="sfxVolumeValue">1.0</span>
+
+            <p style="font-size: 20px;">Performance Notice: Exploring farther loads more chunks, which increases RAM usage.</p>
+            <p style="font-size: 20px;">2GB+ RAM is recommended</p>
+        </div>
+        <div id="prototype">THIS IS A <code>PROTOTYPE</code> AND MAY NOT SHOW THE FINAL RESULT</div>
+        <canvas id="game"></canvas>
+        <audio id="breaksound" src="sounds/breaknoise.mp3"></audio>
+        <audio id="placesound" src="sounds/placenoise.mp3"></audio>
+        <audio id="jumpsound" src="sounds/jumpsound.mp3"></audio>
+        <audio id="player"></audio>
+        <script src="scripts/three.min.js"></script>
+        <script src="scripts/simplex-noise.js"></script>
+        <script src="scripts/script.js"></script>
+    </body>
+</html>
