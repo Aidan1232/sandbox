@@ -238,17 +238,29 @@ const blockDefs = {
   2: "textures/dirt.png",
   3: "textures/stone.png",
   4: "textures/wood.png",
-  5: "textures/leaves.png"
+  5: "textures/leaves.png",
+  6: "textures/glass.png"
 };
 
-// Build 3D textures
+// Build 3D textures or materials
 const blockTextures3D = {};
 for (const id in blockDefs) {
-  blockTextures3D[id] = loader.load(blockDefs[id]);
+  const def = blockDefs[id];
+  if (typeof def === "string") {
+    // normal case: load texture from path
+    blockTextures3D[id] = loader.load(def);
+  } else if (def instanceof THREE.Material) {
+    // special case: already a material (like your window block)
+    blockTextures3D[id] = def;
+  }
 }
 
-// Build UI icons (just reuse the paths)
-const blockIcons = { ...blockDefs };
+// Build UI icons (just reuse the paths or fallback)
+const blockIcons = {};
+for (const id in blockDefs) {
+  const def = blockDefs[id];
+  blockIcons[id] = typeof def === "string" ? def : null; // no icon for custom material
+}
 
 const inventory = Object.keys(blockIcons).map(Number); // block IDs (stone, dirt, wood, etc.)
 let selectedIndex = 0;
@@ -306,7 +318,13 @@ document.addEventListener("keydown", (e) => {
 });
 
 const handGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-const handMat = new THREE.MeshBasicMaterial({ map: blockTextures3D[inventory[selectedIndex]] });
+const handMat = new THREE.MeshBasicMaterial({
+  map: blockTextures3D[inventory[selectedIndex]],
+  transparent: true,
+  opacity: 1.0,
+  depthWrite: false,
+  side: THREE.DoubleSide
+});
 const handMesh = new THREE.Mesh(handGeo, handMat);
 scene.add(handMesh);
 handMesh.position.set(0.5, -0.5, -1);
@@ -455,7 +473,7 @@ function ensureChunkData(cx, cy, cz) {
 
     // Second pass: trees (only in the chunk that contains the surface)
     for (let x = 0; x < CHUNK_SIZE; x++) {
-        for (let z = 0; z < CHUNK_SIZE; z++) {
+      for (let z = 0; z < CHUNK_SIZE; z++) {
         const wx = cx * CHUNK_SIZE + x;
         const wz = cz * CHUNK_SIZE + z;
         const surfaceH = Math.floor(BASE_LEVEL + AMPLITUDE * noise.noise2D(wx / 50, wz / 50));
@@ -475,8 +493,35 @@ function ensureChunkData(cx, cy, cz) {
             treeCenters.add(`${wx},${wz}`);
             generateTree(data, x, z, localSurfaceY);
         }
+      }
     }
-  }
+
+    let housePlaced = false;
+
+    for (let x = 0; x < CHUNK_SIZE; x++) {
+      for (let z = 0; z < CHUNK_SIZE; z++) {
+        if (housePlaced) break; // stop scanning z once a house is placed
+
+        const wx = cx * CHUNK_SIZE + x;
+        const wz = cz * CHUNK_SIZE + z;
+        const surfaceH = Math.floor(BASE_LEVEL + AMPLITUDE * noise.noise2D(wx / 50, wz / 50));
+
+        if (Math.floor(surfaceH / CHUNK_HEIGHT) !== cy) continue;
+        const localSurfaceY = surfaceH - cy * CHUNK_HEIGHT;
+
+        if (localSurfaceY < 0 || localSurfaceY >= CHUNK_HEIGHT) continue;
+        if (data[x][z][localSurfaceY] !== 1) continue; // must be grass
+
+        // Rare chance for house
+        const houseNoise = noise.noise2D(wx / 200, wz / 200);
+        if (houseNoise > 0.5 && canPlaceHouse(data, x, z, localSurfaceY)) {
+          generateHouse(data, x, z, localSurfaceY + 1); // build above ground
+          housePlaced = true; // mark that we've spawned one
+          break; // exit z-loop
+        }
+      }
+      if (housePlaced) break; // exit x-loop too
+    }
 
   chunkData[key] = data;
   return data;
@@ -528,6 +573,85 @@ function canPlaceTree(x, z) {
   return true;
 }
 
+function generateHouse(data, x, z, y) {
+  const width = 7;
+  const depth = 7;
+  const height = 5;
+
+  // If the house would exceed chunk height, bail out
+  if (y + height >= CHUNK_HEIGHT) return;
+
+  // build body
+  for (let dx = 0; dx < width; dx++) {
+    for (let dz = 0; dz < depth; dz++) {
+      for (let dy = 0; dy < height; dy++) {
+        let blockType = 0;
+
+        // floor
+        if (dy === 0) blockType = 4;
+        // walls
+        else if (dx === 0 || dx === width - 1 || dz === 0 || dz === depth - 1) {
+          blockType = 4;
+        }
+
+        // doorway
+        if (dz === 0 && dx === Math.floor(width / 2) && (dy === 1 || dy === 2)) {
+          blockType = 0;
+        }
+
+        // windows
+        if (dy === 2) {
+          if (dx === 0 && dz === Math.floor(depth / 2)) blockType = 6;
+          if (dx === width - 1 && dz === Math.floor(depth / 2)) blockType = 6;
+          if (dz === depth - 1 && dx === Math.floor(width / 2)) blockType = 6;
+        }
+
+        // roof (top layer always overrides)
+        if (dy === height - 1) {
+          blockType = 3;
+        }
+
+        if (
+          blockType !== 0 &&
+          x + dx >= 0 && x + dx < CHUNK_SIZE &&
+          z + dz >= 0 && z + dz < CHUNK_SIZE &&
+          y + dy >= 0 && y + dy < CHUNK_HEIGHT
+        ) {
+          data[x + dx][z + dz][y + dy] = blockType;
+        }
+      }
+    }
+  }
+}
+
+function canPlaceHouse(data, x, z, y, width = 7, depth = 7, height = 5) {
+  for (let dx = 0; dx < width; dx++) {
+    for (let dz = 0; dz < depth; dz++) {
+      for (let dy = 0; dy < height; dy++) {
+        const xx = x + dx;
+        const zz = z + dz;
+        const yy = y + dy;
+
+        // bounds check
+        if (xx < 0 || xx >= CHUNK_SIZE || zz < 0 || zz >= CHUNK_SIZE || yy >= CHUNK_HEIGHT) {
+          return false;
+        }
+
+        // must be grass at base
+        if (dy === 0 && data[xx][zz][y] !== 1) {
+          return false;
+        }
+
+        // everything above must be air
+        if (dy > 0 && data[xx][zz][yy] !== 0) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
 const geometry = new THREE.BoxGeometry(1,1,1);
 
 // Preload materials for each block type
@@ -536,7 +660,8 @@ const materials = {
   2: new THREE.MeshStandardMaterial({ map: loader.load("textures/dirt.png") }),
   3: new THREE.MeshStandardMaterial({ map: loader.load("textures/stone.png") }),
   4: new THREE.MeshStandardMaterial({ map: loader.load("textures/wood.png") }),
-  5: new THREE.MeshStandardMaterial({ map: loader.load("textures/leaves.png") })
+  5: new THREE.MeshStandardMaterial({ map: loader.load("textures/leaves.png") }),
+  6: new THREE.MeshStandardMaterial({ map: loader.load("textures/glass.png"), color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.0 })
 };
 
 function buildMeshFromData(cx, cy, cz, data) {
