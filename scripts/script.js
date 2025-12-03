@@ -827,4 +827,29 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-animate();
+function detectEnvironment() {
+    const ua = navigator.userAgent;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(ua);
+
+    return { isMobile };
+}
+
+function hideAllExcept(idToShow) {
+  // Get all elements in the document
+  const allElements = document.querySelectorAll("body *");
+
+  allElements.forEach(el => {
+    if (el.id === idToShow) {
+      el.style.display = "block"; // show the target
+    } else {
+      el.style.display = "none";  // hide everything else
+    }
+  });
+}
+
+const env = detectEnvironment();
+if (env.isMobile) {
+  hideAllExcept("warning");
+} else {
+  animate();
+}

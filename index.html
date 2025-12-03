@@ -4,13 +4,16 @@
         <meta charset="utf-8">
         <title>Sandbox Prototype</title>
         <link rel="icon" type="image/x-icon" href="icon/favicon.ico">
-        <link rel="preload" href="textures/dirt.png" as="image">
-        <link rel="preload" href="textures/grass.png" as="image">
-        <link rel="preload" href="textures/wood.png" as="image">
-        <link rel="preload" href="textures/leaves.png" as="image">
+        <link rel="preload" href="textures/dirt.png" as="image" crossorigin="anonymous">
+        <link rel="preload" href="textures/grass.png" as="image" crossorigin="anonymous">
+        <link rel="preload" href="textures/wood.png" as="image" crossorigin="anonymous">
+        <link rel="preload" href="textures/leaves.png" as="image" crossorigin="anonymous">
         <link rel="stylesheet" href="styles/style.css">
     </head>
     <body>
+        <div id="warning" style="display:none;">
+            Your browser does not support WebGL, which is required to run this game. Please use a modern browser like Chrome, Firefox, Edge on a PC.
+        </div>
         <div id="instructions">
             Click to lock mouse
         </div>
@@ -51,8 +54,8 @@
             <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="1.0">
             <span id="sfxVolumeValue">1.0</span>
 
-            <p style="font-size: 20px;">Performance Notice: Exploring farther loads more chunks, which increases RAM usage.</p>
-            <p style="font-size: 20px;">2GB+ RAM is recommended</p>
+            <p style="font-size: 15px;">Exploring farther loads more chunks, which increases RAM usage.</p>
+            <p style="font-size: 15px;">2GB+ RAM is recommended</p>
         </div>
         <div id="prototype">THIS IS A <code>PROTOTYPE</code> AND MAY NOT SHOW THE FINAL RESULT</div>
         <canvas id="game"></canvas>
