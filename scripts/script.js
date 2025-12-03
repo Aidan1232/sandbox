@@ -175,6 +175,15 @@ const instructions = document.getElementById("instructions");
 
 let gamestarted = false;
 
+// Shuffle the list (Fisher–Yates)
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
 instructions.addEventListener("click", () => {
     renderer.domElement.requestPointerLock();
     if (!gamestarted) {
@@ -183,15 +192,6 @@ instructions.addEventListener("click", () => {
         const tracks = [];
         for (let i = 1; i <= 15; i++) {
             tracks.push(`music/music${i}.mp3`); // adjust filenames to match your files
-        }
-
-        // Shuffle the list (Fisher–Yates)
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
         }
 
         const shuffled = shuffle(tracks);
@@ -353,6 +353,20 @@ const volumeValue = document.getElementById("volumeValue");
 const sfxVolumeSlider = document.getElementById("sfxVolume");
 const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const player = document.getElementById("player");
+
+let currentIndex = 0;
+player.addEventListener("ended", () => {
+  currentIndex++;
+  if (currentIndex >= shuffled.length) {
+    // reshuffle once we've played everything
+    shuffled = shuffle(tracks);   // reuse your Fisher–Yates shuffle function
+    currentIndex = 0;
+  }
+  player.src = shuffled[currentIndex];
+  player.play().catch(err => {
+    console.log("Playback failed:", err);
+  });
+});
 
 let RADIUS = 4; // how many chunks around player to keep
 
