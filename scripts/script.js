@@ -1,3 +1,5 @@
+"use strict";
+
 // SEED
 let SEED = "26539245";
 
